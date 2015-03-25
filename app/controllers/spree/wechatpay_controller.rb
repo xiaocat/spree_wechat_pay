@@ -15,8 +15,8 @@ module Spree
           fee_type: 1,
           notify_url: request.protocol + request.host + '/wechatpay/notify?id=' + order.id.to_s + '&payment_method_id=' + params[:payment_method_id].to_s,
           spbill_create_ip: request.remote_ip,
-          # time_start: order.created_at && order.created_at.strftime("%Y%m%d%H%M%S"),
-          # time_expire: order.created_at && order.created_at.in(7200).strftime("%Y%m%d%H%M%S"),
+          time_start: order.created_at && order.created_at.strftime("%Y%m%d%H%M%S"),
+          time_expire: order.created_at && order.created_at.in(7200).strftime("%Y%m%d%H%M%S"),
           input_charset: "UTF-8"
       }.reject{ |k, v| v.blank? }.sort.map{ |o| { o.first => o.last } }.inject({}, &:merge)
       p package_options[:notify_url]
@@ -93,8 +93,7 @@ module Spree
     end
 
     def wechat_assess_token
-      # token_response = JSON.parse(Timeout::timeout(30){ Mechanize.new.get("https://api.weixin.qq.com/cgi-bin/token", { grant_type: 'client_credential', appid: payment_method.preferences[:appId], secret: payment_method.preferences[:secret] }).body })
-      token_response = JSON.parse(Timeout::timeout(30){ Mechanize.new.get("https://api.weixin.qq.com/cgi-bin/token", { grant_type: 'client_credential', appid: payment_method.preferences[:appId], secret: 'ba4c004e66d2a1d29b86e79a200649d2' }).body })
+      token_response = JSON.parse(Timeout::timeout(30){ Mechanize.new.get("https://api.weixin.qq.com/cgi-bin/token", { grant_type: 'client_credential', appid: payment_method.preferences[:appId], secret: payment_method.preferences[:secret] }).body })
       raise '获取微信access_token失败' if token_response["errcode"].present? || token_response["access_token"].blank?
       token_response["access_token"]
     end
