@@ -1,0 +1,18 @@
+<fieldset data-hook="wechatpay">
+  <legend align="center"><%= Spree.t(:transaction, :scope => :wechatpay) %></legend>
+
+  <div class="row">
+    <div class="alpha six columns">
+      <dl>
+        <dt><%= Spree.t(:openId, :scope => :wechatpay) %>:</dt>
+        <dd><%= payment.source.open_id %></dd>
+
+        <dt><%= Spree.t(:out_trade_no, :scope => :wechatpay) %>:</dt>
+        <dd><%= payment.source.out_trade_no %></dd>
+
+        <dt><%= Spree.t(:transaction_id) %>:</dt>
+        <dd><%= payment.source.transaction_id %></dd>
+      </dl>
+    </div>
+  </div>
+</fieldset>I
