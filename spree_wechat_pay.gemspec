@@ -2,7 +2,7 @@
 Gem::Specification.new do |s|
   s.platform    = Gem::Platform::RUBY
   s.name        = 'spree_wechat_pay'
-  s.version     = '1.0.0'
+  s.version     = '3.0.0'
   s.summary     = 'Adds Wechat Pay as a Payment Method to Spree Commerce'
   s.description = 'Adds Wechat Pay as a Payment Method to Spree Commerce'
   s.required_ruby_version = '>= 1.9.3'
