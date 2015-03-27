@@ -1,12 +1,13 @@
 <a id="wechatPay<%= payment_method.id %>" payment_method_id="<%= payment_method.id %>" ><img src="<%= payment_method.preferences[:iconUrl] %>" width="42" /></a>
 <script>
     var id = "<%= payment_method.id %>";
+    var dom = "#wechatPay" + id;
     // 当微信内置浏览器完成内部初始化后会触发WeixinJSBridgeReady事件。
     document.addEventListener('WeixinJSBridgeReady', function onBridgeReady() {
         //公众号支付
-        $('#wechatPay' + id).click(function(e){
+        $(dom).click(function(e){
             $.ajax({
-                url: '/alipay/checkout.json?payment_method_id=' + $(this).attr('payment_method_id'),
+                url: '/wechatpay/checkout.json?payment_method_id=' + $(this).attr('payment_method_id'),
                 dataType: 'JSON',
                 type: 'GET',
                 success: function(response){
