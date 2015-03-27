@@ -1,6 +1,6 @@
 module Spree
   class WechatpayController < StoreController
-    ssl_allowed
+    #ssl_allowed
     skip_before_filter :verify_authenticity_token
 
     def checkout
@@ -15,8 +15,8 @@ module Spree
           fee_type: 1,
           notify_url: request.protocol + request.host + '/wechatpay/notify?id=' + order.id.to_s + '&payment_method_id=' + params[:payment_method_id].to_s,
           spbill_create_ip: request.remote_ip,
-          time_start: order.created_at && order.created_at.strftime("%Y%m%d%H%M%S"),
-          time_expire: order.created_at && order.created_at.in(7200).strftime("%Y%m%d%H%M%S"),
+          # time_start: order.created_at && order.created_at.strftime("%Y%m%d%H%M%S"),
+          # time_expire: order.created_at && order.created_at.in(7200).strftime("%Y%m%d%H%M%S"),
           input_charset: "UTF-8"
       }.reject{ |k, v| v.blank? }.sort.map{ |o| { o.first => o.last } }.inject({}, &:merge)
       p package_options[:notify_url]
@@ -25,7 +25,7 @@ module Spree
           appId: payment_method.preferences[:appId],
           timeStamp: Time.now.to_i.to_s,
           nonceStr: (('A'..'Z').to_a + ('a'..'z').to_a + ('0'..'9').to_a).sample(32).join,
-          package: package_options.map{ |k, v| "#{ERB::Util.u(k.to_s)}=#{ERB::Util.u(v.to_s)}" }.join('&'),
+          package: package_options.map{ |k, v| "#{ERB::Util.u(k.to_s)}=#{ERB::Util.u(v.to_s)}" }.join('&')
       }
       options.merge!(signType: 'SHA1', paySign: Digest::SHA1.hexdigest(options.merge(appKey: payment_method.preferences[:appKey]).sort.map{ |k, v| "#{k.to_s.downcase}=#{v.to_s}" }.join('&')))
 
