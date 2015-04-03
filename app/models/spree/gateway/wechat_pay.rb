@@ -6,6 +6,7 @@ module Spree
     preference :partnerKey, :string
     preference :secret, :string
     preference :iconUrl, :string
+    preference :returnHost, :string
 
     def supports?(source)
       true
