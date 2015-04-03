@@ -30,7 +30,7 @@ Wechat server will post xml data for you, maybe you need this:
 gem 'actionpack-xml_parser'
 ```
 
-And add under line to your main project:
+And add under line to 'config/application.rb' in your main project:
 
 ```
 config.middleware.insert_after ActionDispatch::ParamsParser, ActionDispatch::XmlParamsParser
