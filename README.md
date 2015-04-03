@@ -24,6 +24,19 @@ Add this extension to your spree.rb with this line:
 ```ruby
 Rails.application.config.spree.payment_methods << Spree::Gateway::WechatPay
 ```
+Wechat server will post xml data for you, maybe you need this:
+
+```ruby
+gem 'actionpack-xml_parser'
+```
+
+And add under line to your main project:
+
+```
+config.middleware.insert_after ActionDispatch::ParamsParser, ActionDispatch::XmlParamsParser
+```
+
+
 
 Testing
 -------
