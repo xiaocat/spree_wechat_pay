@@ -5,6 +5,7 @@ module Spree
 
     def checkout
       order = current_order || raise(ActiveRecord::RecordNotFound)
+      host = payment_method.preferences[:returnHost].blank? ? request.url.sub(request.fullpath, '') : payment_method.preferences[:returnHost]
 
       package_options = {
           bank_type: "WX",
@@ -13,7 +14,7 @@ module Spree
           out_trade_no: order.number,
           total_fee: (order.total*100).to_i,
           fee_type: 1,
-          notify_url: request.protocol + request.host + '/wechatpay/notify?id=' + order.id.to_s + '&payment_method_id=' + params[:payment_method_id].to_s,
+          notify_url: host + '/wechatpay/notify?id=' + order.id.to_s + '&payment_method_id=' + params[:payment_method_id].to_s,
           spbill_create_ip: request.remote_ip,
           # time_start: order.created_at && order.created_at.strftime("%Y%m%d%H%M%S"),
           # time_expire: order.created_at && order.created_at.in(7200).strftime("%Y%m%d%H%M%S"),
