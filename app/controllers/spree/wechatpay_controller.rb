@@ -3,8 +3,8 @@ module Spree
     #ssl_allowed
     skip_before_filter :verify_authenticity_token
 
-    def checkout
-      order = current_order || raise(ActiveRecord::RecordNotFound)
+    def pay_options(order)
+      payment_method = Spree::PaymentMethod.find(params[:payment_method_id])
       host = payment_method.preferences[:returnHost].blank? ? request.url.sub(request.fullpath, '') : payment_method.preferences[:returnHost]
 
       package_options = {
@@ -20,7 +20,6 @@ module Spree
           # time_expire: order.created_at && order.created_at.in(7200).strftime("%Y%m%d%H%M%S"),
           input_charset: "UTF-8"
       }.reject{ |k, v| v.blank? }.sort.map{ |o| { o.first => o.last } }.inject({}, &:merge)
-      p package_options[:notify_url]
       package_options.merge!(sign: Digest::MD5.hexdigest(package_options.sort.map{ |k, v| "#{k.to_s}=#{v.to_s}" }.push("key=#{payment_method.preferences[:partnerKey]}").join('&')).upcase)
       options = {
           appId: payment_method.preferences[:appId],
@@ -32,7 +31,17 @@ module Spree
 
       options[:orderNumber] = order.number
 
-      render json: options
+      options
+    end
+
+    def checkout
+      order = current_order || raise(ActiveRecord::RecordNotFound)
+      render json: pay_options(order)
+    end
+
+    def checkout_api
+      order = Spree::Order.find(params[:id]) || raise(ActiveRecord::RecordNotFound)
+      render json: pay_options(order)
     end
 
     def notify
@@ -40,7 +49,7 @@ module Spree
       payment_notify_data = params.slice(:sign_type, :service_version, :input_charset, :sign, :sign_key_index, :trade_mode, :trade_state, :pay_info, :partner, :bank_type, :bank_billno, :total_fee, :fee_type, :notify_id, :transaction_id, :out_trade_no, :attach, :time_end, :transport_fee, :product_fee, :discount, :buyer_alias, :xml)
 
       unless payment_notify_data[:trade_state].to_s == '0' && payment_notify_data[:total_fee].to_s == ((order.total*100).to_i).to_s && payment_notify_data.try(:[], :xml).try(:[], :OpenId).present? && Digest::MD5.hexdigest(payment_notify_data.except(:xml, :sign).reject{ |k,v| v.blank? }.sort.map{ |k, v| "#{k.to_s}=#{v.to_s}" }.push("key=#{payment_method.preferences[:partnerKey]}").join('&')).upcase == payment_notify_data[:sign].to_s
-        render text: "fail", layout: false
+        render text: "failure", layout: false
         return
       end
 
@@ -66,13 +75,18 @@ module Spree
       if order.complete?
         render text: "success", layout: false
       else
-        render text: "fail", layout: false
+        render text: "failure", layout: false
       end
     end
 
     def query
       order = Spree::Order.find(params[:id]) || raise(ActiveRecord::RecordNotFound)
-      payment_method = order.payments[0].payment_method
+      payment_method = Spree::PaymentMethod.find(params[:payment_method_id])
+
+      if order.complete?
+        render :text => "success", :layout => false
+        return
+      end
 
       package_options = {
           out_trade_no: order.number,
@@ -86,11 +100,28 @@ module Spree
       }
       options.merge!(sign_method: 'sha1', app_signature: Digest::SHA1.hexdigest(options.merge(appkey: payment_method.preferences[:appKey]).sort.map{ |k, v| "#{k.to_s}=#{v.to_s}" }.join('&')))
 
-      access_token = wechat_assess_token
+      access_token = self.wechat_assess_token
 
-      pay_response = JSON.parse(Timeout::timeout(30){ Mechanize.new.post("https://api.weixin.qq.com/pay/orderquery?access_token=#{access_token}", options.to_json).body })
+      pay_response = JSON.parse(Timeout::timeout(30){ Mechanize.new.post("https://api.weixin.qq.com/pay/orderquery?access_token=#{access_token}", JSON.dump(options)).body })
 
-      render json: pay_response
+      if pay_response['errcode'] == 0 && pay_response['ret_code'] == 0 && pay_response['order_info.trade_state'] == 0
+        order.payments.create!({
+          :source => Spree::WechatPayNotify.create({
+              :transaction_id => pay_response['transaction_id'],
+              :out_trade_no => pay_response['out_trade_no'],
+              :trade_mode => pay_response['trade_mode'],
+              :trade_state => pay_response['trade_state'],
+              :total_fee => pay_response['total_fee'],
+              :source_data => pay_response.to_json
+          }),
+          :amount => order.total,
+          :payment_method => payment_method
+        })
+        order.next
+        render text: "success", layout: false
+      else
+        render :text => "failure", :layout => false
+      end
     end
 
     def wechat_assess_token
