@@ -84,7 +84,7 @@ module Spree
       payment_method = Spree::PaymentMethod.find(params[:payment_method_id])
 
       if order.complete?
-        render :text => "success", :layout => false
+        render json: { 'errCode' => 0, 'msg' => 'success'}
         return
       end
 
@@ -118,9 +118,9 @@ module Spree
           :payment_method => payment_method
         })
         order.next
-        render text: "success", layout: false
+        render json: { 'errCode' => 0, 'msg' => 'success'}
       else
-        render :text => "failure", :layout => false
+        render json: { 'errCode' => 1, 'msg' => 'failure'}
       end
     end
 
