@@ -9,7 +9,7 @@ module Spree
 
       package_options = {
           bank_type: "WX",
-          body: "#{order.line_items[0].product.name}等#{order.line_items.count}件",
+          body: "#{order.line_items[0].product.name.slice(0,10)}等#{order.line_items.count}件",
           partner: payment_method.preferences[:partnerId],
           out_trade_no: order.number,
           total_fee: (order.total*100).to_i,
@@ -85,7 +85,6 @@ module Spree
 
       if order.complete?
         render json: { 'errCode' => 0, 'msg' => 'success'}
-        return
       end
 
       package_options = {
