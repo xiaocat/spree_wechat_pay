@@ -84,7 +84,7 @@ module Spree
       payment_method = Spree::PaymentMethod.find(params[:payment_method_id])
 
       if order.complete?
-        render json: { 'errCode' => 0, 'msg' => 'success'}
+        render json: { 'errCode' => 0, 'msg' => 'success'} and return
       end
 
       package_options = {
